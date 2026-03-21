@@ -6,6 +6,9 @@ import csv
 import random
 import dlib
 import numpy as np
+import pyttsx3
+import winsound
+
 from datetime import datetime
 from scipy.spatial import distance as dist
 
@@ -16,7 +19,7 @@ ATTENDANCE_FILE = os.path.join(ATTENDANCE_DIR, "attendance.csv")
 LANDMARK_PATH = os.path.join(os.path.dirname(__file__), "shape_predictor_68_face_landmarks.dat")
 
 # BLINK SETTINGS
-EAR_THRESHOLD = 0.27
+EAR_THRESHOLD = 0.30
 CONSEC_FRAMES = 2
 
 # INIT DLIB
@@ -71,7 +74,43 @@ def mark_attendance(name, marked_names):
     print(f"[ATTENDANCE] {name} at {now}")
 
 
+def get_name_for_rect(rect, boxes, names):
+    """
+    Map a dlib rect (full-size coords) to the nearest face_recognition box (small image),
+    then return the corresponding name.
+    """
+    rx = (rect.left() + rect.right()) // 2
+    ry = (rect.top() + rect.bottom()) // 2
+
+    best_name = "Unknown"
+    min_dist = 1e9
+
+    for (top, right, bottom, left), name in zip(boxes, names):
+        # convert small box -> full-size
+        t, r, b, l = top * 4, right * 4, bottom * 4, left * 4
+
+        cx = (l + r) // 2
+        cy = (t + b) // 2
+
+        d = (cx - rx) ** 2 + (cy - ry) ** 2
+        if d < min_dist:
+            min_dist = d
+            best_name = name
+
+    return best_name
+
 def main():
+
+    engine = pyttsx3.init()
+    engine.setProperty('rate', 150)   # slower = clearer
+    engine.setProperty('volume', 1.0) # max volume
+
+    voices = engine.getProperty('voices')
+    engine.setProperty('voice', voices[1].id)   # try 1[FOR FEMALE] or 0[FOR MALE]
+
+
+    status_memory = {}
+
     data = load_encodings()
     if data is None:
         return
@@ -123,8 +162,10 @@ def main():
 
             names.append(name)
 
-        # BLINK DETECTION (FIXED)
-        for rect, name in zip(faces_dlib, names):
+        # BLINK DETECTION (FIXED & SAFE)
+        for rect in faces_dlib:
+
+            name = get_name_for_rect(rect, boxes, names)
 
             if name == "Unknown":
                 continue
@@ -149,8 +190,15 @@ def main():
                         print(f"[LIVENESS] Blink detected for {name}")
                     blink_counter[name] = 0
 
+            # if name != "Unknown":
+            #    print(f"EAR for {name}: {EAR}")
+
+
         # MAIN LOOP
         for (top, right, bottom, left), name in zip(boxes, names):
+
+            status = "Initializing..."
+
             top *= 4
             right *= 4
             bottom *= 4
@@ -160,43 +208,113 @@ def main():
 
             if name != "Unknown":
 
+                if name not in status_memory:
+                    status_memory[name] = {
+                        "blink": False,
+                        "move": False,
+                        "time": False,
+                        "verified": False
+                    }
+
+
                 if name not in first_position:
                     first_position[name] = face_center_x
 
                 if challenge == "TURN_LEFT":
                     if face_center_x < first_position[name] - 20:
+                        if name not in movement_verified:
+                            print(f"[LIVENESS] Movement LEFT for {name}")
                         movement_verified.add(name)
                 else:
                     if face_center_x > first_position[name] + 20:
+                        if name not in movement_verified:
+                            print(f"[LIVENESS] Movement RIGHT for {name}")
                         movement_verified.add(name)
 
                 now = datetime.now()
 
                 if name not in first_seen_time:
                     first_seen_time[name] = now
-
-                elapsed = (now - first_seen_time[name]).total_seconds()
-
-                if (
-                    elapsed >= required_duration
-                    and name in movement_verified
-                    and name in blink_verified
-                ):
-                    mark_attendance(name, marked_names)
-                    status = "LIVE VERIFIED"
+                    elapsed = 0
                 else:
-                    status = "Blink + Move"
+                    elapsed = (now - first_seen_time[name]).total_seconds()
+
+                if name in blink_verified:
+                    status_memory[name]["blink"] = True
+
+                if name in movement_verified:
+                    status_memory[name]["move"] = True
+
+                if elapsed >= required_duration:
+                    status_memory[name]["time"] = True
+
+
+                blink_ok = status_memory[name]["blink"]
+                move_ok = status_memory[name]["move"]
+                time_ok = status_memory[name]["time"]
+
+                blink_symbol = '✔' if blink_ok else '✘'
+                move_symbol = '✔' if move_ok else '✘'
+                time_symbol = '✔' if time_ok else '✘'
+
+
+                if blink_ok and move_ok and time_ok:
+                    status_memory[name]["verified"] = True
+
+                    if name not in marked_names:
+                        mark_attendance(name, marked_names)
+
+                        # 🔔 Sound first
+                        winsound.Beep(1000, 200)
+
+                        # 🎙️ Then speak
+                        engine.say(f"Hello {name}. Identity verified. Your attendance has been successfully marked.")
+                        engine.runAndWait()
+
+
+                # ALWAYS SET STATUS AFTER THAT
+                if status_memory[name]["verified"]:
+                    status = "LIVE VERIFIED "
+
+                else:
+                    status = f"Blink {blink_symbol} | Move {move_symbol} | Time {time_symbol}"
+
 
             else:
                 status = "Unknown"
 
-            color = (0, 255, 0) if name != "Unknown" else (0, 0, 255)
+            if name == "Unknown":
+                color = (0, 0, 255)
+            elif "VERIFIED" in status:
+                color = (0, 255, 0) #green box
+            else:
+                color = (0, 140, 255) #orange for processing
+
 
             cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
-            cv2.putText(frame, f"{name} | {status}",
-                        (left, top - 10),
+
+            text = f"{name} | {status}"
+
+            # Get text size
+            (text_width, text_height), _ = cv2.getTextSize(
+                text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2
+            )
+
+            # Draw background rectangle (DARK GRAY)
+            padding = 6
+
+            cv2.rectangle(frame,
+                        (left - padding, top - 35),
+                        (left + text_width + padding, top),
+                        (20, 20, 20),
+                        -1)
+
+
+            cv2.putText(frame, text,
+                        (left + 4, top - 8),
                         cv2.FONT_HERSHEY_SIMPLEX,
-                        0.6, (255, 255, 255), 2)
+                        0.6, (255, 255, 255), 2,
+                        cv2.LINE_AA)
 
         cv2.putText(frame, f"Action: {challenge}",
                     (10, 40),
@@ -205,7 +323,9 @@ def main():
 
         cv2.imshow("Secure Attendance", frame)
 
-        if cv2.waitKey(1) & 0xFF == ord("q"):
+        key = cv2.waitKey(1) & 0xFF
+
+        if key == ord("q") or key == ord("Q"):
             break
 
     cap.release()
