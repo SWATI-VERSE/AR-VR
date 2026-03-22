@@ -79,6 +79,7 @@ SMART_ATTENDANCE_SYSTEM/
 ---
 
 ## ⚙️ Installation & Setup
+
 ```bash
 ### 1️⃣ Clone the Repository
 git clone https://github.com/your-username/smart-attendance-system.git
