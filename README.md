@@ -95,7 +95,7 @@ python main_app.py
 
 ---
 
-🖥️ How It Works
+## 🖥️ How It Works
 
 1. User logs into the system
 2. Starts attendance from dashboard
@@ -111,7 +111,7 @@ python main_app.py
 
 ---
 
-🔍 Challenges Faced
+## 🔍 Challenges Faced
 
         1. Handling real-time face recognition efficiently
         2. Improving accuracy under different lighting conditions
@@ -120,7 +120,7 @@ python main_app.py
 
 ---
 
-🚀 Future Enhancements
+## 🚀 Future Enhancements
 
         ☁️ Cloud-based attendance storage
         📱 Mobile application integration
@@ -130,7 +130,7 @@ python main_app.py
 
 ---
 
-📌 Use Cases
+## 📌 Use Cases
 
         1.Educational Institutions
         2.Corporate Offices
@@ -139,14 +139,14 @@ python main_app.py
 
 ---
 
-👩‍💻 AUTHORS
+## 👩‍💻 AUTHORS
 
     1. Swati Parida
     2. Arpita Priyadarshini Acharya
 
 ---
 
-⭐ Conclusion
+## ⭐ Conclusion
 
 This project demonstrates how combining Face Recognition with Liveness Detection can significantly enhance the reliability and security of attendance systems.
 
