@@ -50,6 +50,7 @@ This ensures that only **real, physically present individuals** are marked for a
 
 ## 📂 Project Structure
 
+```bash
 SMART_ATTENDANCE_SYSTEM/
 │
 ├── src/                          # Core system logic
@@ -74,14 +75,13 @@ SMART_ATTENDANCE_SYSTEM/
 ├── README.md                     # Project documentation
 ├── .gitignore                    # Ignored files (venv, cache, etc.)
 
+```
 ---
 
 ## ⚙️ Installation & Setup
 
-## ⚙️ Installation & Setup
-
-### 1️⃣ Clone the Repository
 ```bash
+### 1️⃣ Clone the Repository
 git clone https://github.com/your-username/smart-attendance-system.git
 cd smart-attendance-system
 
@@ -96,6 +96,7 @@ python main_app.py
 ---
 
 🖥️ *How It Works*
+
 1. User logs into the system
 2. Starts attendance from dashboard
 3. System detects face using camera
@@ -111,6 +112,7 @@ python main_app.py
 ---
 
 🔍 *Challenges Faced*
+
         1. Handling real-time face recognition efficiently
         2. Improving accuracy under different lighting conditions
         3. Tuning blink detection thresholds
@@ -119,6 +121,7 @@ python main_app.py
 ---
 
 🚀 *Future Enhancements*
+
         ☁️ Cloud-based attendance storage
         📱 Mobile application integration
         😷 Mask detection support
@@ -128,6 +131,7 @@ python main_app.py
 ---
 
 📌 *Use Cases*
+
         1.Educational Institutions
         2.Corporate Offices
         3.Secure Entry Systems
@@ -136,6 +140,7 @@ python main_app.py
 ---
 
 👩‍💻 *AUTHORS*
+
     1. Swati Parida
     2. Arpita Priyadarshini Acharya
 
