@@ -133,6 +133,8 @@ def main():
     first_position = {}
     movement_verified = set()
 
+    ear_values = {}
+
     print("Press Q to quit")
 
     while True:
@@ -176,7 +178,11 @@ def main():
             left_eye = coords[36:42]
             right_eye = coords[42:48]
 
+            #  CALCULATE EAR FIRST
             EAR = (eye_aspect_ratio(left_eye) + eye_aspect_ratio(right_eye)) / 2.0
+
+            #  NOW STORE IT
+            ear_values[name] = EAR
 
             if name not in blink_counter:
                 blink_counter[name] = 0
@@ -264,10 +270,10 @@ def main():
                     if name not in marked_names:
                         mark_attendance(name, marked_names)
 
-                        # 🔔 Sound first
+                        #  Sound first
                         winsound.Beep(1000, 200)
 
-                        # 🎙️ Then speak
+                        #  Then speak
                         engine.say(f"Hello {name}. Identity verified. Your attendance has been successfully marked.")
                         engine.runAndWait()
 
@@ -286,9 +292,9 @@ def main():
             if name == "Unknown":
                 color = (0, 0, 255)
             elif "VERIFIED" in status:
-                color = (0, 255, 0) #green box
+                color = (0, 220, 0) #green box
             else:
-                color = (0, 140, 255) #orange for processing
+                color = (0, 165, 255) #orange for processing
 
 
             cv2.rectangle(frame, (left, top), (right, bottom), color, 2)
@@ -306,20 +312,72 @@ def main():
             cv2.rectangle(frame,
                         (left - padding, top - 35),
                         (left + text_width + padding, top),
-                        (20, 20, 20),
+                        (30, 30, 30),
                         -1)
 
 
             cv2.putText(frame, text,
                         (left + 4, top - 8),
                         cv2.FONT_HERSHEY_SIMPLEX,
-                        0.6, (255, 255, 255), 2,
+                        0.65, (255, 255, 255), 2,
                         cv2.LINE_AA)
 
-        cv2.putText(frame, f"Action: {challenge}",
-                    (10, 40),
+        # ===== ACTION BOX =====
+        action_text = f"Action: {challenge}"
+
+        (action_w, action_h), _ = cv2.getTextSize(
+            action_text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2
+        )
+
+        # Draw background box
+        cv2.rectangle(frame,
+                    (5, 5),
+                    (5 + action_w + 20, 5 + action_h + 20),
+                    (30, 30, 30),
+                    -1)
+
+        # Draw text
+        cv2.putText(frame,
+                    action_text,
+                    (15, 5 + action_h + 5),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    0.8, (0, 255, 255), 2)
+                    0.8,
+                    (0, 200, 255),  # orange-yellow
+                    2)
+
+        # ===== EAR BOX (BELOW WITH GAP) =====
+        ear_text = "EAR: --"
+
+        for name in names:
+            if name in ear_values:
+                ear_text = f"EAR: {ear_values[name]:.2f}"
+                break
+
+        # Dynamic color
+        ear_color = (0, 255, 0) if ear_values.get(name, 1) > EAR_THRESHOLD else (0, 0, 255)
+
+        (ear_w, ear_h), _ = cv2.getTextSize(
+            ear_text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2
+        )
+
+        # Position BELOW action with GAP
+        y_offset = 5 + action_h + 30
+
+        # Draw EAR background
+        cv2.rectangle(frame,
+                    (5, y_offset),
+                    (5 + ear_w + 20, y_offset + ear_h + 20),
+                    (30, 30, 30),
+                    -1)
+
+        # Draw EAR text
+        cv2.putText(frame,
+                    ear_text,
+                    (15, y_offset + ear_h + 5),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    ear_color,
+                    2)
 
         cv2.imshow("Secure Attendance", frame)
 
