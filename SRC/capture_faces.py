@@ -2,7 +2,13 @@ import cv2
 import os
 import time
 
-name = input("Enter your name: ")
+import sys
+
+if len(sys.argv) > 1:
+    name = sys.argv[1]
+else:
+    name = input("Enter your name: ")
+
 
 dataset_path = f"DATASET/{name}"
 
