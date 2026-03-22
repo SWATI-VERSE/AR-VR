@@ -50,6 +50,7 @@ This ensures that only **real, physically present individuals** are marked for a
 
 ## 📂 Project Structure
 
+```bash
 SMART_ATTENDANCE_SYSTEM/
 │
 ├── src/                          # Core system logic
@@ -74,6 +75,7 @@ SMART_ATTENDANCE_SYSTEM/
 ├── README.md                     # Project documentation
 ├── .gitignore                    # Ignored files (venv, cache, etc.)
 
+```
 ---
 
 ## ⚙️ Installation & Setup
