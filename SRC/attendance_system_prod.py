@@ -347,14 +347,24 @@ def main():
 
         # ===== EAR BOX (BELOW WITH GAP) =====
         ear_text = "EAR: --"
+        ear_value = None   # SAFE VARIABLE
 
-        for name in names:
-            if name in ear_values:
-                ear_text = f"EAR: {ear_values[name]:.2f}"
+        for n in names:
+            if n in ear_values:
+                ear_value = ear_values[n]
+                ear_text = f"EAR: {ear_value:.2f}"
                 break
+        
+        if ear_value is None:
+            ear_text = "EAR: No Face"
 
-        # Dynamic color
-        ear_color = (0, 255, 0) if ear_values.get(name, 1) > EAR_THRESHOLD else (0, 0, 255)
+        # SAFE COLOR LOGIC
+        if ear_value is None:
+            ear_color = (180, 180, 180)   # gray (no face)
+        elif ear_value > EAR_THRESHOLD:
+            ear_color = (0, 255, 0)       # green (eyes open)
+        else:
+            ear_color = (0, 0, 255)       # red (blink)
 
         (ear_w, ear_h), _ = cv2.getTextSize(
             ear_text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2
